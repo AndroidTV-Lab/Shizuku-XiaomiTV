@@ -239,6 +239,12 @@
      <string name="start">Start</string>
      <string name="stop">Stop</string>
     <string name="action_stop">Stop Shizuku</string>
+    <string name="action_install_system_app">Install as system app</string>
+    <string name="action_update_system_app">Update system app</string>
+    <string name="install_system_app_title">Install as system app</string>
+    <string name="install_system_app_message">Shizuku will be copied to /system/priv-app, the current app will be uninstalled, and the device will reboot automatically.\n\nThis is experimental and requires the TvService channel.</string>
+    <string name="install_system_app_rebooting">Installing as system app, the device will reboot automatically.</string>
+    <string name="install_system_app_update_message">The current update will be copied to /system/priv-app, the update layer will be removed, and the device will reboot automatically.\n\nThis is experimental and requires the TvService channel.</string>
     <string name="dialog_stop_message">Shizuku service will be stopped.</string>
 
     <!-- Notification -->

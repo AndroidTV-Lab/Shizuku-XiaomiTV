@@ -90,12 +90,14 @@ public class ShizukuSettings {
         LaunchMethod.UNKNOWN,
         LaunchMethod.ROOT,
         LaunchMethod.ADB,
+        LaunchMethod.TV_SERVICE,
     })
     @Retention(SOURCE)
     public @interface LaunchMethod {
         int UNKNOWN = -1;
         int ROOT = 0;
         int ADB = 1;
+        int TV_SERVICE = 2;
     }
 
     @LaunchMethod

@@ -8,6 +8,16 @@
         android:showAsAction="ifRoom"/>
 
     <item
+        android:id="@+id/action_install_system_app"
+        android:title="@string/action_install_system_app"
+        android:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_update_system_app"
+        android:title="@string/action_update_system_app"
+        android:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_stop"
         android:title="@string/action_stop"
         android:showAsAction="never"/>

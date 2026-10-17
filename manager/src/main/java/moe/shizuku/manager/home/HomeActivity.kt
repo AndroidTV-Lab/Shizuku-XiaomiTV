@@ -11,12 +11,15 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import moe.shizuku.manager.R
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.adb.AdbPairingService
@@ -28,6 +31,8 @@ import moe.shizuku.manager.home.showAccessibilityDialog
 import moe.shizuku.manager.ktx.toHtml
 import moe.shizuku.manager.management.AppsViewModel
 import moe.shizuku.manager.settings.SettingsActivity
+import moe.shizuku.manager.starter.SystemAppInstaller
+import moe.shizuku.manager.starter.TvServiceStarter
 import moe.shizuku.manager.utils.AppIconCache
 import moe.shizuku.manager.utils.CustomTabsHelper
 import moe.shizuku.manager.utils.EnvironmentUtils
@@ -66,7 +71,19 @@ abstract class HomeActivity : AppBarActivity() {
             if (it.status == Status.SUCCESS) {
                 val status = homeModel.serviceStatus.value?.data ?: return@observe
                 adapter.updateData()
-                ShizukuSettings.setLastLaunchMode(if (status.uid == 0) ShizukuSettings.LaunchMethod.ROOT else ShizukuSettings.LaunchMethod.ADB)
+
+                // Do not overwrite the persisted launch method while no server is running
+                // (ServiceStatus has uid = -1 in that case).
+                if (status.isRunning) {
+                    val serverContext = runCatching { Shizuku.getSELinuxContext() }.getOrNull()
+                    val lastLaunchMode = when {
+                        status.uid != 0 -> ShizukuSettings.LaunchMethod.ADB
+                        serverContext?.contains("misysdiagnose") == true ->
+                            ShizukuSettings.LaunchMethod.TV_SERVICE
+                        else -> ShizukuSettings.LaunchMethod.ROOT
+                    }
+                    ShizukuSettings.setLastLaunchMode(lastLaunchMode)
+                }
             }
         }
 
@@ -157,6 +174,14 @@ abstract class HomeActivity : AppBarActivity() {
         super.onResume()
         checkServerStatus()
         appsModel.load()
+
+        if (!TvServiceStarter.isAvailableCached()) {
+            lifecycleScope.launch {
+                if (withContext(Dispatchers.IO) { TvServiceStarter.isAvailable() }) {
+                    invalidateOptionsMenu()
+                }
+            }
+        }
     }
 
     override fun onPause() {
@@ -182,6 +207,32 @@ abstract class HomeActivity : AppBarActivity() {
         homeModel.reload()
     }
 
+    private fun installSystemApp(messageRes: Int) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.install_system_app_title)
+            .setMessage(messageRes)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                Toast.makeText(
+                    this,
+                    R.string.install_system_app_rebooting,
+                    Toast.LENGTH_LONG
+                ).show()
+                lifecycleScope.launch {
+                    val error = withContext(Dispatchers.IO) {
+                        SystemAppInstaller.install(this@HomeActivity)
+                    }
+                    if (error != null) {
+                        MaterialAlertDialogBuilder(this@HomeActivity)
+                            .setMessage(error)
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show()
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     override fun onDestroy() {
         ShizukuStateMachine.removeListener(stateListener)
         super.onDestroy()
@@ -189,6 +240,11 @@ abstract class HomeActivity : AppBarActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
+        val tvService = TvServiceStarter.isAvailableCached()
+        menu.findItem(R.id.action_install_system_app)?.isVisible =
+            tvService && !SystemAppInstaller.isSystemApp(this)
+        menu.findItem(R.id.action_update_system_app)?.isVisible =
+            tvService && SystemAppInstaller.isUpdatedSystemApp(this)
         return true
     }
 
@@ -230,6 +286,14 @@ abstract class HomeActivity : AppBarActivity() {
                 }
                 
                 dialog.show()
+                true
+            }
+            R.id.action_install_system_app -> {
+                installSystemApp(R.string.install_system_app_message)
+                true
+            }
+            R.id.action_update_system_app -> {
+                installSystemApp(R.string.install_system_app_update_message)
                 true
             }
             R.id.action_stop -> {

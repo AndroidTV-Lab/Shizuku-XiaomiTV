@@ -182,6 +182,12 @@
     <string name="action_start">启动 Shizuku</string>
     <!-- Stop -->
     <string name="action_stop">停止 Shizuku</string>
+    <string name="action_install_system_app">安装为系统应用</string>
+    <string name="action_update_system_app">更新系统应用</string>
+    <string name="install_system_app_title">安装为系统应用</string>
+    <string name="install_system_app_message">Shizuku 将被复制到 /system/priv-app，当前应用会被卸载，设备随后会自动重启。\n\n此功能为实验性功能，依赖 TvService 通道。</string>
+    <string name="install_system_app_rebooting">正在安装为系统应用，设备将自动重启。</string>
+    <string name="install_system_app_update_message">当前更新将被复制到 /system/priv-app，并移除更新层，设备随后会自动重启。\n\n此功能为实验性功能，依赖 TvService 通道。</string>
     <string name="dialog_stop_message">Shizuku 服务将被停止。</string>
     <!-- Notification -->
     <string name="notification_channel_service_status">服务启动状态</string>

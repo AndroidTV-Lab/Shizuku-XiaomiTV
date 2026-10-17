@@ -19,6 +19,7 @@ import moe.shizuku.manager.AppConstants
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.ShizukuSettings.LaunchMethod
 import moe.shizuku.manager.starter.Starter
+import moe.shizuku.manager.starter.TvServiceStarter
 import moe.shizuku.manager.utils.EnvironmentUtils
 import moe.shizuku.manager.utils.SettingsPage
 import moe.shizuku.manager.utils.ShizukuStateMachine
@@ -42,6 +43,8 @@ object ShizukuReceiverStarter {
 
         if (ShizukuSettings.getLastLaunchMode() == LaunchMethod.ROOT) {
             rootStart(context)
+        } else if (ShizukuSettings.getLastLaunchMode() == LaunchMethod.TV_SERVICE) {
+            tvServiceStart(context)
         } else if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.isTelevision() || EnvironmentUtils.getAdbTcpPort() > 0)
             && ShizukuSettings.getLastLaunchMode() == LaunchMethod.ADB) {
                 if (context.checkSelfPermission(WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED) {
@@ -51,7 +54,14 @@ object ShizukuReceiverStarter {
                     showPermissionErrorNotification(context)
                 }
         } else {
-            Log.w(AppConstants.TAG, "Background start not supported")
+            // Fresh install or an unknown launch method: use TvService when available.
+            Thread {
+                if (TvServiceStarter.isAvailable()) {
+                    tvServiceStart(context)
+                } else {
+                    Log.w(AppConstants.TAG, "Background start not supported")
+                }
+            }.start()
         }
     }
 
@@ -126,6 +136,33 @@ object ShizukuReceiverStarter {
             Log.e(AppConstants.TAG, "Failed to start Shizuku with root", e)
             ShizukuStateMachine.update()
         }
+    }
+
+    private fun tvServiceStart(context: Context) {
+        ShizukuStateMachine.set(ShizukuStateMachine.State.STARTING)
+        Thread {
+            // TvService may not be ready right after boot, so retry for about a minute.
+            var lastError: Exception? = null
+            for (attempt in 1..30) {
+                try {
+                    TvServiceStarter.start(context)
+
+                    // Wait for the binder to arrive before considering the start successful.
+                    repeat(50) {
+                        if (ShizukuStateMachine.isRunning()) return@Thread
+                        Thread.sleep(200)
+                    }
+                    lastError = Exception("Binder not received")
+                } catch (e: Exception) {
+                    lastError = e
+                    Log.w(AppConstants.TAG, "TvService start attempt $attempt failed", e)
+                }
+                Thread.sleep(2000)
+            }
+
+            Log.e(AppConstants.TAG, "Failed to start Shizuku with TvService", lastError)
+            ShizukuStateMachine.update()
+        }.start()
     }
 
     private fun showPermissionErrorNotification(context: Context) {

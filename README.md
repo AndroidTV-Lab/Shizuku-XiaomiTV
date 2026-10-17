@@ -1,123 +1,65 @@
-<div align="center">
-   
-# Shizuku
+# Shizuku-XiaomiTV
 
-An Android app that allows other apps to use system-level APIs that require ADB/root privileges.
+基于 [Shizuku](README-original.md) 的小米电视分支：利用小米电视固件中的 `TvService` 诊断通道以 root 身份启动 Shizuku 服务，并在安装为系统应用后实现开机静默启动。
 
-**I'm pausing maintenance for the time being, I simply haven't had time to work on this and it was a side project.**
+## 原理
 
-[![Stars](https://img.shields.io/github/stars/thedjchi/Shizuku?style=for-the-badge&color=bfb330&labelColor=807820&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPnN0YXI8L3RpdGxlPjxwYXRoIGQ9Ik0xMiwxNy4yN0wxOC4xOCwyMUwxNi41NCwxMy45N0wyMiw5LjI0TDE0LjgxLDguNjJMMTIsMkw5LjE5LDguNjJMMiw5LjI0TDcuNDUsMTMuOTdMNS44MiwyMUwxMiwxNy4yN1oiIGZpbGw9IndoaXRlIiAvPjwvc3ZnPg==)](https://github.com/thedjchi/Shizuku/stargazers)
-[![Downloads](https://img.shields.io/github/downloads/thedjchi/Shizuku/total?style=for-the-badge&color=bf7830&labelColor=805020&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRpdGxlPmRvd25sb2FkPC90aXRsZT48cGF0aCBkPSJNNSwyMEgxOVYxOEg1TTE5LDlIMTVWM0g5VjlINUwxMiwxNkwxOSw5WiIgZmlsbD0id2hpdGUiIC8+PC9zdmc+)](https://github.com/thedjchi/Shizuku/releases)
+小米电视的 `mitv.internal.ITvService`（`TvService`）暴露了一个诊断入口，传入脚本路径后会交给运行在 `u:r:misysdiagnose:s0`、uid=0 的诊断组件执行，且未做充分鉴权：
 
-[![Latest Stable](https://img.shields.io/github/v/release/thedjchi/Shizuku?style=for-the-badge&color=3060bf&labelColor=204080&label=Latest%20Stable&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZTNlM2UzIj48cGF0aCBkPSJNNDQwLTgycS03Ni04LTE0MS41LTQxLjV0LTExNC04N1ExMzYtMjY0IDEwOC0zMzNUODAtNDgwcTAtOTEgMzYuNS0xNjhUMjE2LTc4MGgtOTZ2LTgwaDI0MHYyNDBoLTgwdi0xMDlxLTU1IDQ0LTg3LjUgMTA4LjVUMTYwLTQ4MHEwIDEyMyA4MC41IDIxMi41VDQ0MC0xNjN2ODFabS0xNy0yMTRMMjU0LTQ2Nmw1Ni01NiAxMTMgMTEzIDIyNy0yMjcgNTYgNTctMjgzIDI4M1ptMTc3IDE5NnYtMjQwaDgwdjEwOXE1NS00NSA4Ny41LTEwOVQ4MDAtNDgwcTAtMTIzLTgwLjUtMjEyLjVUNTIwLTc5N3YtODFxMTUyIDE1IDI1NiAxMjh0MTA0IDI3MHEwIDkxLTM2LjUgMTY4VDc0NC0xODBoOTZ2ODBINjAwWiIvPjwvc3ZnPg==)](https://github.com/thedjchi/Shizuku/releases/latest?q=prerelease%3Afalse&expanded=true)
-[![Latest Beta](https://img.shields.io/github/v/release/thedjchi/Shizuku?sort=semver&style=for-the-badge&color=30bf60&labelColor=208040&label=Latest%20Beta&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZTNlM2UzIj48cGF0aCBkPSJNMjAwLTEyMHEtNTEgMC03Mi41LTQ1LjVUMTM4LTI1MGwyMjItMjcwdi0yNDBoLTQwcS0xNyAwLTI4LjUtMTEuNVQyODAtODAwcTAtMTcgMTEuNS0yOC41VDMyMC04NDBoMzIwcTE3IDAgMjguNSAxMS41VDY4MC04MDBxMCAxNy0xMS41IDI4LjVUNjQwLTc2MGgtNDB2MjQwbDIyMiAyNzBxMzIgMzkgMTAuNSA4NC41VDc2MC0xMjBIMjAwWm04MC0xMjBoNDAwTDU0NC00MDBINDE2TDI4MC0yNDBabS04MCA0MGg1NjBMNTIwLTQ5MnYtMjY4aC04MHYyNjhMMjAwLTIwMFptMjgwLTI4MFoiLz48L3N2Zz4=)](https://github.com/thedjchi/Shizuku/releases)
+```sh
+service call TvService 4400 s16 s s16 /data/local/tmp/script.sh
+```
 
-[![Bug Reports](https://img.shields.io/github/issues-search/thedjchi/Shizuku?query=label%3Abug%20state%3Aopen&style=for-the-badge&color=bf3030&labelColor=802020&label=Bug%20Reports)](https://github.com/thedjchi/Shizuku/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug)
-[![Feature Requests](https://img.shields.io/github/issues-search/thedjchi/Shizuku?query=label%3Aenhancement%20state%3Aopen&style=for-the-badge&color=30a7bf&labelColor=207080&label=Feature%20Requests)](https://github.com/thedjchi/Shizuku/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement)
+本分支在这个通道上增加了启动器：
 
-[![Translate on Crowdin](https://img.shields.io/badge/Translate%20on%20Crowdin-2e3340?style=for-the-badge&logo=crowdin&logoColor=ffffff)](https://crowdin.com/project/shizuku)
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-bfb330?style=for-the-badge&logo=buymeacoffee&logoColor=ffffff)](https://www.buymeacoffee.com/thedjchi)
+1. App 进程启动时检查 `service list` 中是否存在 `TvService` / `mitv.internal.ITvService`
+2. 用无害探测脚本确认通道确实以 uid=0 执行
+3. 生成运行时脚本，通过 `app_process` 启动 `rikka.shizuku.server.ShizukuService`
+4. 服务端以 root 运行，Binder 回传到管理端
 
-</div>
+普通数据安装的包在开机后会被小米电视置为 `stopped=true`，因此收不到 `BOOT_COMPLETED`。App 内提供“安装为系统应用”入口，把 APK 和 `librish.so` 复制到 `/system` 并移除数据安装；重启后系统应用可以正常接收开机广播并静默启动服务。
 
-## ⚠️ Disclaimer
+系统应用无法使用常规的 `nativeLibraryDir`，因此 `librish.so` 需要放到 `/system/lib`（64 位为 `/system/lib64`），启动参数中的 `shizuku.library.path` 指向该目录。
 
-This is a **FORK** of Shizuku. If you are looking for the original version, please visit the [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) repository.
+## 功能
 
-## ⬇️ Download
+- App 启动时自动检测 TvService 并启动服务
+- “安装为系统应用”入口（仅在 TvService 可用且当前不是系统应用时显示）
+- 安装完成后 Toast 提示并自动重启
+- 系统应用开机自动启动
+- 简体中文、繁体中文、英文文案
 
-Get the latest [stable](https://github.com/thedjchi/Shizuku/releases/latest) or [beta](https://github.com/thedjchi/Shizuku/releases) version.
+## 已验证设备
 
-All versions are distributed via [GitHub Releases](https://github.com/thedjchi/Shizuku/releases).
+| 设备 | 系统 | 结果 |
+|---|---|---|
+| Xiaomi MiTV_ASTP0（`mulan`） | Android 9 / API 28，OS3.0.104.0.PSTAATV，armeabi-v7a | TvService 提权、root 服务、App 启动自动拉起、系统应用开机静默启动均验证通过 |
 
-## ✨ Added Features
+## 可能适用的设备
 
-This version of Shizuku includes some extra features over the original version, such as:
-* **More robust "start on boot":** waits for a Wi-Fi connection before starting the Shizuku service
-* **TCP mode:** (i.e., the `adb tcpip` command) once Shizuku successfully starts with Wi-Fi after a reboot, you can stop/restart Shizuku without a Wi-Fi connection!
-* **Watchdog service:** automatically restarts Shizuku if it stops unexpectedly, and can alert you of crashes/potential fixes
-* **Start/stop intents:** toggle Shizuku on-demand using automation apps (e.g., Tasker, MacroDroid, Automate)
-* **[BETA] Stealth mode:** hide Shizuku from other apps that don't work when Shizuku is installed
-* **[BETA] In-app updates:** option to automatically check for new updates, and can automatically download/install the latest version from GitHub
-* **Android/Google TV and VR headset support:** UI is now compatible with D-Pad remotes, all TVs are supported (including Android 14+ TVs that require pairing), and the multi-window pairing dialog is toggleable in settings for VR headsets
-* **MediaTek support:** fixes a critical bug in the original v13.6.0 which prevented Shizuku from working on MediaTek devices
-* And more!
+- 运行小米电视系统（Mi TV OS 3 等）且存在 `TvService` / `mitv.internal.ITvService` 的小米电视，尤其是 Amlogic 平台机型
+- 是否可用由 App 的预检决定：`service list` 中存在该服务，且探测脚本能以 uid=0 执行
+- 非小米、非该固件的设备不适用；其他机型未逐一验证
 
-## 📝 User Guide
+## 使用
 
-Please read the [wiki](https://github.com/thedjchi/Shizuku/wiki) for setup, info, and troubleshooting steps.
+1. 安装并打开 App，首次启动会自动尝试通过 TvService 启动服务
+2. 如需开机静默启动：菜单 → Install as system app → 确认 → 自动重启
+3. 重启后 App 作为系统应用运行，服务自动启动
 
-## ☑️ Requirements
+## 构建
 
-**Minimum Version: Android 7+**
-- **Root mode:** Requires a rooted device
-- **Wireless Debugging mode:** Works on Android 11+ and all Android TVs
-- **PC mode:** Works on all devices
-- **Start on boot:** Available only when using Wireless Debugging or Root mode
+```bash
+git submodule update --init --recursive
+./gradlew :manager:assembleRelease
+```
 
-## 🔒 Privacy
+要求：Android SDK、NDK 29.0.13113456、CMake 3.31+、JDK 21。
 
-Shizuku takes user privacy very seriously.
+## 注意
 
-* No tracking or analytics
-* No telemetry
-* No proprietary libraries
-* No Google Play Services
-* Open-source codebase
-* Reproducible builds
-* Internet access is only used for wireless debugging connections and to fetch updates from GitHub
-* Only required permissions are declared
+- 该通道是固件特定的，系统更新可能修复
+- 安装为系统应用会写入 `/system`，OTA 后可能丢失
+- 仅用于你自己拥有的设备
 
-### Permissions
-
-* **INTERNET:** required for the wireless debugging start mode to work. Also used to fetch updates from GitHub
-* **ACCESS_NETWORK_STATE:** used to determine when Wi-Fi is available for background start via wireless debugging
-* **POST_NOTIFICATIONS:** required for pairing notification and other alerts
-* **RECEIVE_BOOT_COMPLETED:** required for start on boot
-* **FOREGROUND_SERVICE:** prevents watchdog from being killed
-* **REQUEST_IGNORE_BATTERY_OPTIMIZATIONS:** prevents start on boot and watchdog services from being killed
-* **WRITE_SECURE_SETTINGS:** used to toggle USB and wireless debugging in the background when starting/stopping Shizuku
-* **REQUEST_DELETE_PACKAGES:** used to request uninstall for Shizuku/stub when using stealth mode
-* **REQUEST_INSTALL_PACKAGES:** used to request install for app updates, as well as Shizuku stub when using stealth mode
-
-## 🌎 Translations
-
-Contribute translations through the [Crowdin project](https://crowdin.com/project/shizuku).
-
-## 🎁 Donations
-
-This Shizuku fork and all of its features will always be free, and there will never be ads. If you've found any of the added features to be useful, consider [donating](https://www.buymeacoffee.com/thedjchi) to help me maintain the project!
-
-## 📱 Developer Guide
-
-### API & Demo Project
-The API guide and a demo project are available in the [Shizuku-API](https://github.com/thedjchi/Shizuku-API) repository
-
-### Notes
-
-1. Shizuku has different permissions in root and ADB mode. You can see permissions granted to ADB [here](https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/packages/Shell/AndroidManifest.xml).
-   If your app requires root permission, use `ShizukuService#getUid` to check if Shizuku is running as root or ADB, or use `ShizukuService#checkPermission` to check if the server has sufficient permissions.
-2. On devices running Android 8 or lower, if you need to use Shizuku in a Service or Broadcast Receiver that might not be started by an Activity, please trigger the send binder by starting a transparent activity.
-3. Please prefer using `ShizukuBinderWrapper` instead of directly using `transactRemote` when possible, as API calls can change across Android versions.
-
-## 🤝 Contritbuting
-
-### Building the App
-
-- Clone with `git clone --recurse-submodules`
-- Run gradle task `:manager:assembleDebug` or `:manager:assembleRelease`
-
-The `:manager:assembleDebug` task generates a debuggable server. You can attach a debugger to `shizuku_server` to debug the server. In Android Studio, ensure `Run/Debug configurations > Always install with package manager` is checked, so that the server will use the latest code.
-
-### Submitting Changes
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b branch-name`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Commit message'`)
-5. Push to the branch (`git push origin branch-name`)
-6. Open a Pull Request
-
-## 📃 License
-
-All code files in this project are licensed under [Apache 2.0](LICENSE)
+原 fork 的 README（功能、下载、隐私说明等）见：[README-original.md](README-original.md)
