@@ -31,9 +31,9 @@ service call TvService 4400 s16 s s16 /data/local/tmp/script.sh
 
 ## 已验证设备
 
-| 设备 | 系统 | 结果 |
-|---|---|---|
-| Xiaomi MiTV_ASTP0（`mulan`） | Android 9 / API 28，OS3.0.104.0.PSTAATV，armeabi-v7a | TvService 提权、root 服务、App 启动自动拉起、系统应用开机静默启动均验证通过 |
+| 设备                            | 系统 | 结果 |
+|---------------------------------|---|---|
+| 小米 RDEMI L75MA-RAE（`mulan`） | Android 9 / API 28，OS3.0.104.0.PSTAATV，armeabi-v7a | TvService 提权、root 服务、App 启动自动拉起、系统应用开机静默启动均验证通过 |
 
 ## 可能适用的设备
 
