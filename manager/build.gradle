@@ -14,7 +14,7 @@ plugins {
 android {
     namespace = "moe.shizuku.manager"
     defaultConfig {
-        applicationId = "moe.shizuku.privileged.api"
+        applicationId = "xiaomitv.moe.shizuku.privileged.api"
         versionCode = rootProject.ext.versionCode
         versionName = rootProject.ext.versionName
         externalNativeBuild {
