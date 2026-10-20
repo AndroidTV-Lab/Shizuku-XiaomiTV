@@ -35,7 +35,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.prerelease && 'beta' || 'master' }}
+          # Build the branch the workflow was dispatched from, not the fork's default
+          # branch; Xiaomi TV support lives on XiaomiTV and must not be silently dropped.
+          ref: ${{ github.ref_name }}
           submodules: 'recursive'
           fetch-depth: 0
 
