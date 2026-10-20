@@ -22,9 +22,11 @@ object TvServiceStarter {
     private const val SERVICE_INTERFACE = "mitv.internal.ITvService"
     private const val TRANSACTION_CODE = "4400"
 
-    private const val SCRIPT_NAME = "shizuku_tv_start.sh"
+    // TvService rejects script paths longer than 68 characters. The package name alone takes
+    // 35 of them, so the file names must stay very short: /data/user/0/<pkg>/files/<name>.
+    private const val SCRIPT_NAME = "s.sh"
     private const val LOG_NAME = "shizuku_tv_start.log"
-    private const val PROBE_SCRIPT_NAME = "shizuku_tv_probe.sh"
+    private const val PROBE_SCRIPT_NAME = "p.sh"
     private const val PROBE_OUTPUT_NAME = "shizuku_tv_probe.out"
     private const val PROBE_TIMEOUT_MS = 3000L
 

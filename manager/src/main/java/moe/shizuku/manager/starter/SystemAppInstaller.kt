@@ -15,7 +15,9 @@ import moe.shizuku.manager.utils.Logger.LOGGER
  */
 object SystemAppInstaller {
 
-    private const val SCRIPT_NAME = "install_system_app.sh"
+    // TvService rejects script paths longer than 68 characters; /data/user/0/<pkg>/files/
+    // already takes 57 of them with the long Xiaomi TV package name.
+    private const val SCRIPT_NAME = "i.sh"
 
     fun isSystemApp(context: Context): Boolean {
         return context.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
